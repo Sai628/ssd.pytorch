@@ -1,12 +1,15 @@
-from .config import HOME
-import os
+# coding=utf-8
+
 import os.path as osp
 import sys
+
 import torch
 import torch.utils.data as data
-import torchvision.transforms as transforms
 import cv2
 import numpy as np
+
+from .config import HOME
+
 
 COCO_ROOT = osp.join(HOME, 'dataset/coco/')
 IMAGES = 'images'
