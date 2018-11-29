@@ -199,7 +199,7 @@ def train():
                                                           'ssd300_' + args.dataset + '_' + repr(iteration) + '.pth'))
     model_save_file = os.path.join(args.save_folder, args.dataset + '.pth')
     torch.save(ssd_net.state_dict(), model_save_file)
-    print('model has saved to:{}\n'.format(model_save_file))
+    print('\nmodel has saved to:{}\n'.format(model_save_file))
     print('finished!')
 
 
