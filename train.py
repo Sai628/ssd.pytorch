@@ -66,7 +66,7 @@ else:
     torch.set_default_tensor_type('torch.FloatTensor')
 
 if not os.path.exists(args.save_folder):
-    os.mkdir(args.save_folder)
+    os.makedirs(args.save_folder)
 
 if args.visdom:
     import visdom
@@ -164,15 +164,17 @@ def train():
             adjust_learning_rate(optimizer, args.gamma, step_index)
 
         # load train data
-        images, targets = next(batch_iterator)
+        try:
+            images, targets = next(batch_iterator)
+        except StopIteration:
+            batch_iterator = iter(data_loader)
+            images, targets = next(batch_iterator)
 
         if args.cuda:
-            images = Variable(images.cuda())
+            images = images.cuda()
             with torch.no_grad():
-                targets = [Variable(ann.cuda()) for ann in targets]
-        else:
-            images = Variable(images)
-            targets = [Variable(ann, volatile=True) for ann in targets]
+                targets = [ann.cuda() for ann in targets]
+
         # forward
         t0 = time.time()
         out = net(images)
@@ -196,10 +198,9 @@ def train():
 
         if iteration != 0 and iteration % 5000 == 0:
             print('Saving state, iter:', iteration)
-            torch.save(ssd_net.state_dict(), 'weights/ssd300_COCO_' +
-                       repr(iteration) + '.pth')
-    torch.save(ssd_net.state_dict(),
-               args.save_folder + '' + args.dataset + '.pth')
+            torch.save(ssd_net.state_dict(), os.path.join(args.save_folder,
+                                                          'ssd300_' + args.dataset + '_' + repr(iteration) + '.pth'))
+    torch.save(ssd_net.state_dict(), os.path.join(args.save_folder, args.dataset + '.pth'))
 
 
 def adjust_learning_rate(optimizer, gamma, step):
