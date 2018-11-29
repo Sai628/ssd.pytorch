@@ -49,6 +49,8 @@ parser.add_argument('--gamma', default=0.1, type=float,
                     help='Gamma update for SGD')
 parser.add_argument('--visdom', default=False, type=str2bool,
                     help='Use visdom for loss visualization')
+parser.add_argument('--env', default='ssd', type=str,
+                    help='visdom env name')
 parser.add_argument('--save_folder', default='weights/',
                     help='Directory for saving checkpoint models')
 args = parser.parse_args()
@@ -66,6 +68,10 @@ else:
 
 if not os.path.exists(args.save_folder):
     os.mkdir(args.save_folder)
+
+if args.visdom:
+    import visdom
+    viz = visdom.Visdom(env=args.env, use_incoming_socket=False)
 
 
 def train():
@@ -87,10 +93,6 @@ def train():
         dataset = VOCDetection(root=args.dataset_root,
                                transform=SSDAugmentation(cfg['min_dim'],
                                                          MEANS))
-
-    if args.visdom:
-        import visdom
-        viz = visdom.Visdom()
 
     ssd_net = build_ssd('train', cfg['min_dim'], cfg['num_classes'])
     net = ssd_net
