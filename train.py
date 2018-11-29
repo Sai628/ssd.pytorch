@@ -11,6 +11,7 @@ import torch.backends.cudnn as cudnn
 import torch.nn.init as init
 import torch.utils.data as data
 import argparse
+from tqdm import tqdm
 
 
 def str2bool(v):
@@ -147,11 +148,10 @@ def train():
                                   pin_memory=True)
     # create batch iterator
     batch_iterator = iter(data_loader)
-    for iteration in range(args.start_iter, cfg['max_iter']):
+    for iteration in tqdm(range(args.start_iter, cfg['max_iter']), unit='iter', desc='train'):
         if args.visdom and iteration != 0 and (iteration % epoch_size == 0):
             epoch += 1
-            update_vis_plot(epoch, loc_loss, conf_loss, epoch_plot, None,
-                            'append', epoch_size)
+            update_vis_plot(epoch, loc_loss, conf_loss, epoch_plot, None, 'append', epoch_size)
             # reset epoch loss counters
             loc_loss = 0
             conf_loss = 0
@@ -175,6 +175,7 @@ def train():
         # forward
         t0 = time.time()
         out = net(images)
+
         # backprop
         optimizer.zero_grad()
         loss_l, loss_c = criterion(out, targets)
@@ -185,18 +186,13 @@ def train():
         loc_loss += loss_l.data.item()
         conf_loss += loss_c.data.item()
 
-        if iteration % 10 == 0:
-            print('timer: %.4f sec.' % (t1 - t0))
-            print('iter ' + repr(iteration) + ' || Loss: %.4f ||' % (loss.data.item()), end=' ')
-
         if args.visdom:
-            update_vis_plot(iteration, loss_l.data.item(), loss_c.data.item(),
-                            iter_plot, epoch_plot, 'append')
+            update_vis_plot(iteration, loss_l.data.item(), loss_c.data.item(), iter_plot, epoch_plot, 'append')
 
         if iteration != 0 and iteration % 5000 == 0:
-            print('Saving state, iter:', iteration)
-            torch.save(ssd_net.state_dict(), os.path.join(args.save_folder,
-                                                          'ssd300_' + args.dataset + '_' + repr(iteration) + '.pth'))
+            tmp_save_file = os.path.join(args.save_folder, 'ssd300_' + args.dataset + '_' + repr(iteration) + '.pth')
+            torch.save(ssd_net.state_dict(), tmp_save_file)
+
     model_save_file = os.path.join(args.save_folder, args.dataset + '.pth')
     torch.save(ssd_net.state_dict(), model_save_file)
     print('\nmodel has saved to:{}\n'.format(model_save_file))
